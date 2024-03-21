@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Descargar archivos</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 0;
+                padding: 20px;
+            }
+            .container {
+                max-width: 600px;
+                margin: 0 auto;
+            }
+            .form-group {
+                margin-bottom: 20px;
+            }
+            .form-group label {
+                display: block;
+                font-weight: bold;
+            }
+            .form-group input[type="file"] {
+                display: block;
+                margin-top: 5px;
+            }
+            .form-group input[type="submit"] {
+                padding: 10px 20px;
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+            }
+            .form-group input[type="submit"]:hover {
+                background-color: #45a049;
+            }
+        </style>
+    </head>
+<body>
+    <h2>Archivos para Descargar</h2>
+    <a href="/download/{{ filename1 }}" download>Descargar Clientes.xlsx</a><br><br>
+    <a href="/download/{{ filename2 }}" download>Descargar Transacciones.xlsx</a>
+</body>
+</html>

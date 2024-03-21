@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subir y Descargar Archivos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: bold;
+        }
+        .form-group input[type="file"] {
+            display: block;
+            margin-top: 5px;
+        }
+        .form-group input[type="submit"] {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .form-group input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Subir Archivos</h2>
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="file1">Archivo 1: Clientes</label>
+                <input type="file" name="file1" id="file1">
+            </div>
+            <div class="form-group">
+                <label for="file2">Archivo 2: Transacciones</label>
+                <input type="file" name="file2" id="file2">
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Descargar Archivos">
+            </div>
+        </form>
+    </div>
+</body>
+</html>
