@@ -12,7 +12,7 @@ app = Flask(__name__)
 
 # Configuración de la carpeta de subida
 UPLOAD_FOLDER = 'uploads'
-ALLOWED_EXTENSIONS = {'xlsx'}
+ALLOWED_EXTENSIONS = {'xlsx', 'csv'}
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -87,31 +87,40 @@ def upload_file():
 def modify_files(filename1, filename2):
 
     # Paso 1: Leer informe Excel Clientes
-    f1 = pd.read_excel(filename1)
+    if filename1.endswith('.csv'): f1 = pd.read_csv(filename1, delimiter=";")
+    else: f1 = pd.read_excel(filename1)
     f1.columns = [i.strip() for i in f1.columns] # Removiendo espacios en columnas
     f1 = f1.rename(columns={"NIT":"CEDULA", "NOMBREINTE":"Nombre y Apellido", "AGENCIA":"COD. AGENCIA"})
     f1["CEDULA"] = f1["CEDULA"].astype('int64', errors='ignore')  # Convirtiendo cédula a entero
 
     # Paso 2: Leer informe Excel Transacciones
-    f2 = pd.read_excel(filename2)
+    if filename2.endswith('.csv'): f2 = pd.read_csv(filename2, delimiter=";")
+    else: f2 = pd.read_excel(filename2)
     f2.columns = [i.strip() for i in f2.columns] # Removiendo espacios en columnas
     f2.columns = [col.upper() for col in f2.columns]
     
     f2 = f2.rename(columns={"CEDULA":"DOCUMENTO1", "TOTAL EFECTIVO":"VALOR", 
                             "TIPO DE MOVIMIENTO":"OPERACION",   "AGENCIA": "COD. AGENCIA", 
-                            "TIPODEMOVIMIENTO":"OPERACION", "TOTALEFECTIVO": "VALOR"})
+                            "TIPODEMOVIMIENTO":"OPERACION", "TOTALEFECTIVO": "VALOR",
+                            "JURISDICCION":"COD. AGENCIA"})
+    
     f2["OPERACION"] = f2["OPERACION"].apply(lambda x: "CREDITO" if "C" in x else "DEBITO")
     
     if 'DISPOSITIVO' not in f2.columns: f2['DISPOSITIVO']=''
+
+    if 'COD. AGENCIA' not in f2.columns: f2["COD. AGENCIA"] = '-'
 
     f2 = f2.rename(columns={'FECHA_REGISTRO':'FECHA'})
     
     if "ESTADO" in f2.columns: f2 = f2[f2["ESTADO"]=="APROBADA"]
     
-    if 'FECHA_REGISTRO' in f2.columns: 
-        f2["FECHA"] = pd.to_datetime(f2['FECHA'], format="%Y%m%d") 
-    else:
-        f2["FECHA"] = pd.to_datetime(f2['FECHA'])  
+    if 'FECHA_REGISTRO' in f2.columns:  
+        f2["FECHA"] = pd.to_datetime(f2['FECHA'], format=formato) 
+    else: 
+        try:
+            f2["FECHA"] = pd.to_datetime(f2['FECHA'], format="%d/%m/%Y")  
+        except:
+            f2["FECHA"] = pd.to_datetime(f2['FECHA']) 
     
     f2['Mes'] = f2['FECHA'].dt.to_period('M')  # Extrayendo el mes de la fecha
     f2["DOCUMENTO1"] = f2["DOCUMENTO1"].astype('int64') # Convirtiendo documento a entero
@@ -164,7 +173,6 @@ def modify_files(filename1, filename2):
     b2 = pd.concat([b21, b22]).fillna(0).sort_values(by=["CEDULA", "Fecha"])
     b2 = b2[["Fecha", "CEDULA", "N_DEBITO", "SUMA_DEBITO", "N_CREDITO", 
             "SUMA_CREDITO", "PRODUCTO", "CANAL", "JURISDICCION"]]
-
     return b1, b2
 
 # Función para modificar el archivo Excel cambiando el nombre de la hoja
