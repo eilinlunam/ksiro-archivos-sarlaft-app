@@ -86,40 +86,51 @@ def upload_file():
         
 def modify_files(filename1, filename2):
 
+    valor=True # Dividir valores por cien.
+
     # Paso 1: Leer informe Excel Clientes
     f1 = pd.read_excel(filename1)
     f1.columns = [i.strip() for i in f1.columns] # Removiendo espacios en columnas
-    f1 = f1.rename(columns={"NIT":"CEDULA", "Cedula":"CEDULA", "NOMBREINTE":"Nombre y apellido", "AGENCIA":"COD AGENCIA"})
+    f1 = f1.rename(columns={"NIT":"CEDULA", "Cedula":"CEDULA", "NOMBREINTE":"Nombre y apellido", 
+                            "AGENCIA":"COD. AGENCIA", "CODCIUDAD": "COD AGENCIA_2"})
     f1["CEDULA"] = f1["CEDULA"].astype('int64', errors='ignore')  # Convirtiendo cédula a entero
 
     # Paso 2: Leer informe Excel Transacciones
     f2 = pd.read_excel(filename2)
     f2.columns = [i.strip() for i in f2.columns] # Removiendo espacios en columnas
     f2.columns = [col.upper() for col in f2.columns]
-    
-    f2 = f2.rename(columns={"CEDULA":"DOCUMENTO1", "TOTAL EFECTIVO":"VALOR", 
-                            "TIPO DE MOVIMIENTO":"OPERACION",   "AGENCIA": "COD. AGENCIA", 
-                            "TIPODEMOVIMIENTO":"OPERACION", "TOTALEFECTIVO": "VALOR",
-                            "NATURALEZA":"OPERACION", "CODAGENCIA":"COD. AGENCIA", "CODLINEA":"PRODUCTO"})
+        
+    f2 = f2.rename(columns={"CEDULA":"DOCUMENTO1", "TOTAL EFECTIVO":"VALOR", "TIPO DE MOVIMIENTO":"OPERACION",
+                        "AGENCIA1": "COD. AGENCIA", "TIPODEMOVIMIENTO":"OPERACION", "TOTALEFECTIVO": "VALOR",
+                        "NATURALEZA":"OPERACION", "CODAGENCIA":"COD. AGENCIA", "CODLINEA":"PRODUCTO",
+                        "AGENCIA2": "COD. AGENCIA_2", "AGENCIA": "COD. AGENCIA_0", "OPERACIÓN":"OPERACION",
+                        "DOCUMENTO":"DOCUMENTO1"})
 
-    f2["OPERACION"] = f2["OPERACION"].apply(lambda x: "CREDITO" if "CNGC" in x else "DEBITO")
+    f2["OPERACION"] = f2["OPERACION"].apply(lambda x: "CREDITO" if "CNGC" in x else x)
     f2["OPERACION"] = f2["OPERACION"].apply(lambda x: "CREDITO" if "C" in x else "DEBITO")
-    
-    if 'DISPOSITIVO' not in f2.columns: f2['DISPOSITIVO']=''
-
-    f2 = f2.rename(columns={'FECHA_REGISTRO':'FECHA'})
-    
+    if 'DISPOSITIVO' not in f2.columns: f2['DISPOSITIVO']=''    
     if "ESTADO" in f2.columns: f2 = f2[f2["ESTADO"]=="APROBADA"]
     
     if 'FECHA_REGISTRO' in f2.columns: 
-        f2["FECHA"] = pd.to_datetime(f2['FECHA'], format="%Y%m%d") 
+        f2 = f2.rename(columns={'FECHA_REGISTRO':'FECHA'})
+        formato = "%Y%m%d"
+        f2["FECHA"] = pd.to_datetime(f2['FECHA'], format=formato) 
     else:
-        f2["FECHA"] = pd.to_datetime(f2['FECHA'])  
+        try:
+            formato = "%Y%m%d"
+            f2["FECHA"] = pd.to_datetime(f2['FECHA'], format=formato) 
+        except:
+            f2["FECHA"] = pd.to_datetime(f2['FECHA'])   
     
     f2['Mes'] = f2['FECHA'].dt.to_period('M')  # Extrayendo el mes de la fecha
     f2["DOCUMENTO1"] = f2["DOCUMENTO1"].astype('int64') # Convirtiendo documento a entero
     f2['CANAL'] = f2['CANAL'] + ' ' + f2['DISPOSITIVO'] if 'CANAL' in f2 else 'Taquilla'
+    if valor: 
+        f2['VALOR'] = f2['VALOR']/100
     condAgencia = 1 if "COD. AGENCIA" in f2.columns else 0
+    condAgencia = 1 if "COD. AGENCIA" in f2.columns else 0
+    condAgencia1 = 1 if "COD. AGENCIA_1" in f2.columns else 0
+    condAgencia2 = 1 if "COD. AGENCIA_2" in f2.columns else 0
     condProducto = 1 if "PRODUCTO" in f2.columns else 0
 
     # Paso 3: Extrayendo datos de clientes
@@ -151,22 +162,40 @@ def modify_files(filename1, filename2):
     if condAgencia==0:
         b2 = pd.merge(b2, f1[['CEDULA', 'COD. AGENCIA']], left_on='DOCUMENTO1', right_on='CEDULA', how='left')
         b2 = b2.drop("CEDULA", axis=1)
-    b2 = b2.fillna("*")
+    if condAgencia1==0:
+        try:        
+            sf1 = f1[['CEDULA', 'COD AGENCIA_1']].drop_duplicates(subset=['CEDULA'])
+            sf1 = dict(zip(sf1['CEDULA'], sf1['COD AGENCIA_1']))
+            b2['COD AGENCIA_1'] = b2['DOCUMENTO1'].apply(lambda x: sf1[x] if x in sf1 else 'N.A.') 
+        except: 
+            b2["COD AGENCIA_1"] = ""
+            
+    if condAgencia2==0:
+        try:
+            sf2 = f1[['CEDULA', 'COD AGENCIA_2']].drop_duplicates(subset=['CEDULA'])
+            sf2 = dict(zip(sf2['CEDULA'], sf2['COD AGENCIA_2']))
+            b2['COD AGENCIA_2'] = b2['DOCUMENTO1'].apply(lambda x: sf2[x] if x in sf2 else 'N.A.') 
+        except: 
+            b2["COD AGENCIA_2"] = ""        
+
 
     # Renombrar columnas debito y creditos
-    columns = ["Mes", "DOCUMENTO1", "N_VALOR", "VALOR", "PRODUCTO", 'CANAL', "COD. AGENCIA"]
+    columns = ["Mes", "DOCUMENTO1", "N_VALOR", "VALOR", "PRODUCTO", 'CANAL',
+            "COD. AGENCIA", 'COD AGENCIA_1', 'COD AGENCIA_2']
     b21 = b2[b2["OPERACION"]=="DEBITO"][columns].rename(columns={"Mes":"Fecha", "DOCUMENTO1":"CEDULA", 
                                                                 'CANAL':"CANAL", "N_VALOR":"N_DEBITO",
-                                                                "VALOR":"SUMA_DEBITO", "COD. AGENCIA":"JURISDICCION"})
+                                                                "VALOR":"SUMA_DEBITO", "COD. AGENCIA":"JURISDICCION",
+                                                                "COD AGENCIA_1":"JURISDICCION1", "COD AGENCIA_2":"JURISDICCION2"})
 
     b22 = b2[b2["OPERACION"]=="CREDITO"][columns].rename(columns={"Mes":"Fecha", "DOCUMENTO1":"CEDULA", 
                                                                 'CANAL':"CANAL", "N_VALOR":"N_CREDITO",
-                                                                "VALOR":"SUMA_CREDITO", "COD. AGENCIA":"JURISDICCION"})
-
+                                                                "VALOR":"SUMA_CREDITO", "COD. AGENCIA":"JURISDICCION",
+                                                                "COD AGENCIA_1":"JURISDICCION1", "COD AGENCIA_2":"JURISDICCION2"})
+        
     # Concatenando columnas debito, creditos y ordenando
     b2 = pd.concat([b21, b22]).fillna(0).sort_values(by=["CEDULA", "Fecha"])
     b2 = b2[["Fecha", "CEDULA", "N_DEBITO", "SUMA_DEBITO", "N_CREDITO", 
-            "SUMA_CREDITO", "PRODUCTO", "CANAL", "JURISDICCION"]]
+            "SUMA_CREDITO", "PRODUCTO", "CANAL", "JURISDICCION", "JURISDICCION2"]]
 
     return b1, b2
 
