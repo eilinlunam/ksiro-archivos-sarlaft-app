@@ -86,7 +86,7 @@ def upload_file():
         
 def modify_files(filename1, filename2):
 
-    valor=True # Dividir valores por cien.
+    valor=False # Dividir valores por cien.
 
     # Paso 1: Leer informe Excel Clientes
     f1 = pd.read_excel(filename1)
@@ -103,10 +103,11 @@ def modify_files(filename1, filename2):
     f2 = f2.rename(columns={"CEDULA":"DOCUMENTO1", "TOTAL EFECTIVO":"VALOR", "TIPO DE MOVIMIENTO":"OPERACION",
                         "AGENCIA1": "COD. AGENCIA", "TIPODEMOVIMIENTO":"OPERACION", "TOTALEFECTIVO": "VALOR",
                         "NATURALEZA":"OPERACION", "CODAGENCIA":"COD. AGENCIA", "CODLINEA":"PRODUCTO",
-                        "AGENCIA2": "COD. AGENCIA_2", "AGENCIA": "COD. AGENCIA_0", "OPERACIÓN":"OPERACION",
-                        "DOCUMENTO":"DOCUMENTO1"})
+                        "AGENCIA2": "COD. AGENCIA_2", "AGENCIA": "COD. AGENCIA_0", "OPERACIÓN":"OPERACION"})
+                        #"DOCUMENTO":"DOCUMENTO1"})
 
     f2["OPERACION"] = f2["OPERACION"].apply(lambda x: "CREDITO" if "CNGC" in x else x)
+    f2["OPERACION"] = f2["OPERACION"].apply(lambda x: "DEBITO" if "RETC" in x else x)
     f2["OPERACION"] = f2["OPERACION"].apply(lambda x: "CREDITO" if "C" in x else "DEBITO")
     if 'DISPOSITIVO' not in f2.columns: f2['DISPOSITIVO']=''    
     if "ESTADO" in f2.columns: f2 = f2[f2["ESTADO"]=="APROBADA"]
@@ -117,7 +118,8 @@ def modify_files(filename1, filename2):
         f2["FECHA"] = pd.to_datetime(f2['FECHA'], format=formato) 
     else:
         try:
-            formato = "%Y%m%d"
+            #formato = "%Y%m%d"
+            
             f2["FECHA"] = pd.to_datetime(f2['FECHA'], format=formato) 
         except:
             f2["FECHA"] = pd.to_datetime(f2['FECHA'])   
