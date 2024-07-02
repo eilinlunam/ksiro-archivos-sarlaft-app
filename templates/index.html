@@ -1,18 +1,27 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Subir y Descargar Archivos</title>
+    <title>Aplicación de Archivos SARLAFT</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 20px;
+            background-color: #f4f4f4;
         }
         .container {
-            max-width: 600px;
-            margin: 0 auto;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
         }
         .form-group {
             margin-bottom: 20px;
@@ -20,40 +29,300 @@
         .form-group label {
             display: block;
             font-weight: bold;
+            margin-bottom: 5px;
         }
-        .form-group input[type="file"] {
-            display: block;
-            margin-top: 5px;
+        .form-group select,
+        .form-group input[type="file"],
+        .form-group input[type="submit"] {
+            width: 48%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            display: inline-block;
+            vertical-align: top;
+            margin-right: 2%;
+        }
+        .form-group select {
+            margin-right: 0;
         }
         .form-group input[type="submit"] {
-            padding: 10px 20px;
             background-color: #4CAF50;
             color: white;
-            border: none;
-            border-radius: 4px;
             cursor: pointer;
+            transition: background-color 0.3s ease;
+            width: 100%;
+            margin-right: 0;
         }
         .form-group input[type="submit"]:hover {
             background-color: #45a049;
         }
+        /* Estilos para el menú de navegación */
+        .navbar {
+            background-color: #333;
+            overflow: hidden;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+        .navbar a {
+            float: left;
+            display: block;
+            color: #f2f2f2;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+            font-size: 17px;
+        }
+        .navbar a:hover {
+            background-color: #ddd;
+            color: black;
+        }
+        /* Estilos para el modal */
+        .modal {
+            display: none; /* Por defecto oculto */
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5); /* Fondo semitransparente */
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 400px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .modal-content p {
+            margin-bottom: 15px;
+        }
+        .modal-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .modal-btn:hover {
+            background-color: #45a049;
+        }
+        /* Estilos para el checkbox Histórico */
+        .form-group .checkbox-group {
+            margin-top: 5px;
+        }
+        .form-group .checkbox-group label {
+            font-weight: normal;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        /* Estilos para el radio button */
+        .form-group .radio-group label {
+            font-weight: normal;
+            display: inline-block; /* Mostrar en línea */
+            margin-right: 20px; /* Espacio entre los radio buttons */
+        }
+
+        .form-group .radio-group input[type="radio"] {
+            display: inline-block; /* Alinear en línea */
+            vertical-align: middle; /* Alinear verticalmente al centro */
+        }
+        .flash-message {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #f44336;
+            color: white;
+            border-radius: 4px;
+        }
     </style>
+    <script>
+        // Función para mostrar el modal
+        function showModal() {
+            var modal = document.getElementById("myModal");
+            modal.style.display = "block";
+        }
+
+        // Función para cerrar el modal
+        function closeModal() {
+            var modal = document.getElementById("myModal");
+            modal.style.display = "none";
+        }
+
+        // Función para establecer el mes y año actuales por defecto
+        function setDefaultDates() {
+            const today = new Date();
+            const monthIndex = today.getMonth(); // Obtener el índice del mes actual (0-11)
+            const year = today.getFullYear();
+            
+            // Array con nombres completos de los meses en español
+            const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                                "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+            
+            // Establecer el valor del mes actual
+            document.getElementById('mes').value = monthNames[monthIndex];
+            document.getElementById('year').value = year;
+        }
+
+        // Ejecutar la función al cargar la página
+        window.onload = function() {
+            setDefaultDates(); // Establecer mes y año actuales por defecto
+        };
+
+        // Función para validar y enviar el formulario
+        function validateAndSubmit() {
+            var file1 = document.getElementById('file1').files[0];
+            var file2 = document.getElementById('file2').files[0];
+
+            if (!file1 || !file2) {
+                showModal();
+                return false; // Detener el envío del formulario
+            }
+
+            return true; // Permitir el envío del formulario
+        }
+    </script>
 </head>
 <body>
-    <div class="container">
+    <!-- Menú de navegación -->
+    <div class="navbar">
+        <a href="#subir">Subir Archivos</a>
+        <a href="#unir">Unir Archivos</a>
+    </div>
+
+    <!-- Contenedor principal para la aplicación "Subir Archivos" -->
+    <div class="container" id="subir">
         <h2>Subir Archivos</h2>
-        <form action="/upload" method="post" enctype="multipart/form-data">
+        <form action="/upload" method="post" enctype="multipart/form-data" onsubmit="return validateAndSubmit()">
+            
+
+                    <!-- Mostrar mensajes de flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash-message">
+                        <strong>{{ category }}</strong>: {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+            <form action="/upload" method="post" enctype="multipart/form-data">
             <div class="form-group">
-                <label for="file1">Archivo 1: Clientes</label>
+                <label for="mes">Mes:</label>
+                <select name="mes" id="mes">
+                    <option value="Enero">Enero</option>
+                    <option value="Febrero">Febrero</option>
+                    <option value="Marzo">Marzo</option>
+                    <option value="Abril">Abril</option>
+                    <option value="Mayo">Mayo</option>
+                    <option value="Junio">Junio</option>
+                    <option value="Julio">Julio</option>
+                    <option value="Agosto">Agosto</option>
+                    <option value="Septiembre">Septiembre</option>
+                    <option value="Octubre">Octubre</option>
+                    <option value="Noviembre">Noviembre</option>
+                    <option value="Diciembre">Diciembre</option>
+                </select>
+                <select name="year" id="year">
+                    <script>
+                        const currentYear = new Date().getFullYear();
+                        for (let year = currentYear - 5; year <= currentYear + 5; year++) {
+                            document.write(`<option value="${year}">${year}</option>`);
+                        }
+                    </script>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Historico:</label>
+                <div class="radio-group">
+                    <label><input type="radio" name="historico" value="true"> Sí</label>
+                    <label><input type="radio" name="historico" value="false" checked> No</label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="file1">Archivo 1: Subir archivo de Clientes</label>
                 <input type="file" name="file1" id="file1">
             </div>
             <div class="form-group">
-                <label for="file2">Archivo 2: Transacciones</label>
+                <label for="file2">Archivo 2: Subir archivo de Transacciones</label>
                 <input type="file" name="file2" id="file2">
+            </div>
+            <div class="form-group">
+                <label for="menu">Seleccione una opción:</label>
+                <select name="menu" id="menu">
+                    <option value="OPA">OPA</option>
+                    <option value="VISIONAMOS">VISIONAMOS</option>
+                </select>
             </div>
             <div class="form-group">
                 <input type="submit" value="Descargar Archivos">
             </div>
         </form>
     </div>
+
+    <!-- Contenedor principal para la aplicación "Unir Archivos" -->
+    <div class="container" id="unir">
+        <h2>Unir Archivos</h2>
+        <form action="/join" method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="mes">Mes:</label>
+                <select name="mes" id="mes">
+                    <option value="Enero">Enero</option>
+                    <option value="Febrero">Febrero</option>
+                    <option value="Marzo">Marzo</option>
+                    <option value="Abril">Abril</option>
+                    <option value="Mayo">Mayo</option>
+                    <option value="Junio">Junio</option>
+                    <option value="Julio">Julio</option>
+                    <option value="Agosto">Agosto</option>
+                    <option value="Septiembre">Septiembre</option>
+                    <option value="Octubre">Octubre</option>
+                    <option value="Noviembre">Noviembre</option>
+                    <option value="Diciembre">Diciembre</option>
+                </select>
+                <select name="year" id="year">
+                    <script>
+                        const currentYear1 = new Date().getFullYear();
+                        for (let year = currentYear1 - 5; year <= currentYear1 + 5; year++) {
+                            document.write(`<option value="${year}">${year}</option>`);
+                        }
+                    </script>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Historico:</label>
+                <div class="radio-group">
+                    <label><input type="radio" name="historico" value="true"> Sí</label>
+                    <label><input type="radio" name="historico" value="false" checked> No</label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="file1">Subir archivo 1 (OPA):</label>
+                <input type="file" name="file1" id="file1">
+            </div>
+            <div class="form-group">
+                <label for="file2">Subir archivo 2 (VISIONAMOS):</label>
+                <input type="file" name="file2" id="file2">
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Unir Archivos">
+            </div>
+        </form>
+    </div>
+
+    <!-- Modal -->
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <p>Debe subir ambos archivos.</p>
+            <button class="modal-btn" onclick="closeModal()">Aceptar</button>
+        </div>
+    </div>
+
 </body>
 </html>
